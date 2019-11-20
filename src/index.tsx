@@ -18,6 +18,7 @@ export interface SheetProps extends React.HTMLAttributes<HTMLDivElement> {
   snapPoints?: number[];
   minimumVisibleHeight?: number;
   initialSnapPoint?: number;
+  dragDelay?: number | boolean;
 }
 
 function Sheet(
@@ -27,6 +28,7 @@ function Sheet(
     children,
     style,
     minimumVisibleHeight = 0,
+    dragDelay = true,
     ...props
   }: SheetProps,
   ref: React.Ref<HTMLDivElement | null>
@@ -93,6 +95,8 @@ function Sheet(
       // the more the user drags up, the more friction
       if (newY < 0) newY = newY / (1 - newY * 0.005);
 
+      const lastSnapPoint = realSnapPoints[realSnapPoints.length - 1];
+
       // if the user drags up passed a threshold, then we cancel
       // the drag so that the sheet resets to its open position
       if (newY < -120 && cancel) {
@@ -115,14 +119,21 @@ function Sheet(
 
         set({ y: closestSnapPoint, config: { ...config.stiff, velocity: vy } });
       } else {
+        const diff = height - lastSnapPoint;
+        const safeAreaSize =
+          minimumVisibleHeight > diff ? minimumVisibleHeight : diff;
+
         set({
-          y: clamp(newY, -200, height - minimumVisibleHeight),
+          y: clamp(newY, -200, height - safeAreaSize),
           immediate: false,
           config: config.stiff,
         });
       }
 
       return memo;
+    },
+    {
+      dragDelay: dragDelay,
     }
   );
 

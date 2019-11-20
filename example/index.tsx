@@ -10,7 +10,7 @@ const App = () => {
   const sheetRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <Sheet ref={sheetRef} snapPoints={[0, 0.4, 0.8]} minimumVisibleHeight={120}>
+    <Sheet ref={sheetRef} snapPoints={[0, 0.25]}>
       <div className="header" />
 
       <div className="list">
