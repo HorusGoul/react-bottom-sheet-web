@@ -4,6 +4,8 @@ import React, {
   useLayoutEffect,
   useEffect,
   useState,
+  forwardRef,
+  useImperativeHandle,
 } from 'react';
 import { useDrag } from 'react-use-gesture';
 import { useSpring, animated, config } from 'react-spring';
@@ -17,13 +19,16 @@ export interface SheetProps extends React.HTMLAttributes<HTMLDivElement> {
   minimumVisibleHeight?: number;
 }
 
-function Sheet({
-  snapPoints = [0, 0.7],
-  children,
-  style,
-  minimumVisibleHeight = 0,
-  ...props
-}: SheetProps) {
+function Sheet(
+  {
+    snapPoints = [0, 0.7],
+    children,
+    style,
+    minimumVisibleHeight = 0,
+    ...props
+  }: SheetProps,
+  ref: React.Ref<HTMLDivElement | null>
+) {
   const [height, setHeight] = useState(
     () => document.documentElement.clientHeight
   );
@@ -111,6 +116,8 @@ function Sheet({
     }
   );
 
+  useImperativeHandle(ref, () => sheetRef.current, []);
+
   return (
     <animated.div
       ref={sheetRef}
@@ -128,4 +135,4 @@ function Sheet({
   );
 }
 
-export default Sheet;
+export default forwardRef(Sheet);

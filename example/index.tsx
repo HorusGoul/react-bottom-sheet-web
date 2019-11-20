@@ -7,8 +7,10 @@ import './styles.css';
 const items = new Array(100).fill(null).map((_, index) => `Item ${index}`);
 
 const App = () => {
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+
   return (
-    <Sheet snapPoints={[0, 0.4, 0.8]} minimumVisibleHeight={120}>
+    <Sheet ref={sheetRef} snapPoints={[0, 0.4, 0.8]} minimumVisibleHeight={120}>
       <div className="header" />
 
       <div className="list">
