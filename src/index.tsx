@@ -14,14 +14,16 @@ import { disableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
 import './styles.css';
 
 export interface SheetProps extends React.HTMLAttributes<HTMLDivElement> {
-  snapPoints?: number[];
   children: React.ReactNode;
+  snapPoints?: number[];
   minimumVisibleHeight?: number;
+  initialSnapPoint?: number;
 }
 
 function Sheet(
   {
     snapPoints = [0, 0.7],
+    initialSnapPoint,
     children,
     style,
     minimumVisibleHeight = 0,
@@ -39,7 +41,15 @@ function Sheet(
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
-  const [{ y }, set] = useSpring(() => ({ y: height * 0.8 }));
+  const [{ y }, set] = useSpring(() => {
+    const snapPoint = initialSnapPoint
+      ? initialSnapPoint
+      : snapPoints[snapPoints.length - 1];
+
+    return {
+      y: height * snapPoint,
+    };
+  });
 
   useEffect(() => {
     const listener = () => setHeight(document.documentElement.clientHeight);
