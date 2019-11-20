@@ -1,17 +1,32 @@
-import React, { useRef, useMemo, useLayoutEffect } from 'react';
+import React, {
+  useRef,
+  useMemo,
+  useLayoutEffect,
+  useEffect,
+  useState,
+} from 'react';
 import { useDrag } from 'react-use-gesture';
 import { useSpring, animated, config } from 'react-spring';
 import clamp from 'lodash.clamp';
 import { disableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
+import './styles.css';
 
-const sheetBaseStyles: React.CSSProperties = {
-  position: 'fixed',
-  backgroundColor: 'white',
-  width: '100%',
-};
+export interface SheetProps extends React.HTMLAttributes<HTMLDivElement> {
+  snapPoints?: number[];
+  children: React.ReactNode;
+  minimumVisibleHeight?: number;
+}
 
-function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
-  const height = document.documentElement.clientHeight;
+function Sheet({
+  snapPoints = [0, 0.7],
+  children,
+  style,
+  minimumVisibleHeight = 0,
+  ...props
+}: SheetProps) {
+  const [height, setHeight] = useState(
+    () => document.documentElement.clientHeight
+  );
 
   const realSnapPoints = useMemo(() => {
     return snapPoints.map(point => point * height).sort();
@@ -20,6 +35,14 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
   const [{ y }, set] = useSpring(() => ({ y: height * 0.8 }));
+
+  useEffect(() => {
+    const listener = () => setHeight(document.documentElement.clientHeight);
+
+    window.addEventListener('resize', listener);
+
+    return () => window.removeEventListener('resize', listener);
+  }, []);
 
   useLayoutEffect(() => {
     sheetRef.current && disableBodyScroll(sheetRef.current);
@@ -39,18 +62,18 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
       cancel,
       event,
     }) => {
-      event && event.preventDefault();
+      if (event && event.isPropagationStopped) {
+        return memo;
+      }
 
       let newY = memo + my;
 
       if (first) {
         draggingRef.current = true;
-      }
-      // if this is not the first or last frame, it's a moving frame
-      // then it means the user is dragging
-      else if (last) {
+      } else if (last) {
         draggingRef.current = false;
       }
+
       // adds friction when dragging the sheet upward
       // the more the user drags up, the more friction
       if (newY < 0) newY = newY / (1 - newY * 0.005);
@@ -60,6 +83,7 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
       if (newY < -120 && cancel) {
         cancel();
       }
+
       if (last) {
         const [closestSnapPoint] = realSnapPoints.reduce(
           ([prev, prevDiff], point) => {
@@ -77,18 +101,13 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
         set({ y: closestSnapPoint, config: { ...config.stiff, velocity: vy } });
       } else {
         set({
-          y: clamp(newY, -200, height),
+          y: clamp(newY, -200, height - minimumVisibleHeight),
           immediate: false,
           config: config.stiff,
         });
       }
 
       return memo;
-    },
-    {
-      event: {
-        passive: false,
-      },
     }
   );
 
@@ -97,12 +116,14 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
       ref={sheetRef}
       {...bind()}
       style={{
-        ...sheetBaseStyles,
+        ...style,
         height,
         transform: y.interpolate(y => `translateY(${y}px)`),
       }}
+      data-bottom-sheet
+      {...props}
     >
-      Sheet
+      {children}
     </animated.div>
   );
 }

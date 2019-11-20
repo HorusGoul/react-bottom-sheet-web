@@ -1,8 +1,8 @@
 {
   "name": "react-bottom-sheet-web",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "license": "MIT",
-  "author": "Horus Lugo",
+  "author": "Horus Lugo <horusgoul@gmail.com>",
   "main": "dist/index.js",
   "module": "dist/react-bottom-sheet-web.esm.js",
   "typings": "dist/index.d.ts",
@@ -35,9 +35,12 @@
     "@types/lodash.clamp": "^4.0.6",
     "@types/react": "^16.9.11",
     "@types/react-dom": "^16.9.4",
+    "autoprefixer": "^9.7.2",
+    "cssnano": "^4.1.10",
     "husky": "^3.1.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "rollup-plugin-postcss": "^2.0.3",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.2"
