@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { useDrag } from 'react-use-gesture';
 import { useSpring, animated, config } from 'react-spring';
 import clamp from 'lodash.clamp';
@@ -22,6 +21,14 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
   const draggingRef = useRef(false);
   const [{ y }, set] = useSpring(() => ({ y: height * 0.8 }));
 
+  useLayoutEffect(() => {
+    sheetRef.current && disableBodyScroll(sheetRef.current);
+
+    return () => {
+      clearAllBodyScrollLocks();
+    };
+  }, []);
+
   const bind = useDrag(
     ({
       first,
@@ -38,15 +45,11 @@ function Sheet({ snapPoints = [0, 0.4, 0.8] }) {
 
       if (first) {
         draggingRef.current = true;
-
-        sheetRef.current && disableBodyScroll(sheetRef.current);
       }
       // if this is not the first or last frame, it's a moving frame
       // then it means the user is dragging
       else if (last) {
         draggingRef.current = false;
-
-        clearAllBodyScrollLocks();
       }
       // adds friction when dragging the sheet upward
       // the more the user drags up, the more friction
