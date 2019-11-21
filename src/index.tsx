@@ -43,6 +43,7 @@ function Sheet(
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+  const dragPathRef = useRef<EventTarget[]>([]);
   const [{ y }, set] = useSpring(() => {
     const snapPoint = initialSnapPoint
       ? initialSnapPoint
@@ -79,16 +80,24 @@ function Sheet(
       cancel,
       event,
     }) => {
-      if (event && event.isPropagationStopped) {
+      if (!event) {
         return memo;
       }
+
+      const nativeEvent = (event as any) as Event;
 
       let newY = memo + my;
 
       if (first) {
         draggingRef.current = true;
+        dragPathRef.current = pathUntilElement(
+          nativeEvent.srcElement as HTMLElement,
+          sheetRef.current as HTMLElement
+        );
+        console.log(dragPathRef.current);
       } else if (last) {
         draggingRef.current = false;
+        dragPathRef.current = [];
       }
 
       // adds friction when dragging the sheet upward
@@ -146,7 +155,7 @@ function Sheet(
       style={{
         ...style,
         height,
-        transform: y.interpolate(y => `translateY(${y}px)`),
+        transform: y.interpolate((y: number) => `translateY(${y}px)`),
       }}
       data-bottom-sheet
       {...props}
@@ -157,3 +166,18 @@ function Sheet(
 }
 
 export default forwardRef(Sheet);
+
+function pathUntilElement(
+  from: HTMLElement,
+  to: HTMLElement,
+  path: HTMLElement[] = []
+): HTMLElement[] {
+  const parent = from.parentElement;
+  let newPath = [...path, from];
+
+  if (parent === to) {
+    return [...newPath, parent];
+  }
+
+  return pathUntilElement(from, to, newPath);
+}
