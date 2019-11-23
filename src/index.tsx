@@ -90,11 +90,13 @@ function Sheet(
 
       if (first) {
         draggingRef.current = true;
+
+        const fromElement = nativeEvent.srcElement || nativeEvent.target;
+
         dragPathRef.current = pathUntilElement(
-          nativeEvent.srcElement as HTMLElement,
+          fromElement as HTMLElement,
           sheetRef.current as HTMLElement
         );
-        console.log(dragPathRef.current);
       } else if (last) {
         draggingRef.current = false;
         dragPathRef.current = [];
@@ -175,9 +177,13 @@ function pathUntilElement(
   const parent = from.parentElement;
   let newPath = [...path, from];
 
+  if (!parent) {
+    return newPath;
+  }
+
   if (parent === to) {
     return [...newPath, parent];
   }
 
-  return pathUntilElement(from, to, newPath);
+  return pathUntilElement(parent, to, newPath);
 }
