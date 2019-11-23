@@ -8,12 +8,13 @@ const items = new Array(100).fill(null).map((_, index) => `Item ${index}`);
 
 const App = () => {
   const sheetRef = React.useRef<HTMLDivElement>(null);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <Sheet ref={sheetRef} snapPoints={[0, 0.25]}>
+    <Sheet ref={sheetRef} snapPoints={[0, 0.25]} scrollRef={scrollRef}>
       <div className="header" />
 
-      <div className="list">
+      <div ref={scrollRef} className="list">
         {items.map(item => (
           <div key={item} className="item">
             {item}

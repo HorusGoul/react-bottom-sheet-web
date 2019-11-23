@@ -19,6 +19,7 @@ export interface SheetProps extends React.HTMLAttributes<HTMLDivElement> {
   minimumVisibleHeight?: number;
   initialSnapPoint?: number;
   dragDelay?: number | boolean;
+  scrollRef?: React.RefObject<HTMLElement>;
 }
 
 function Sheet(
@@ -28,7 +29,8 @@ function Sheet(
     children,
     style,
     minimumVisibleHeight = 0,
-    dragDelay = true,
+    dragDelay = false,
+    scrollRef,
     ...props
   }: SheetProps,
   ref: React.Ref<HTMLDivElement | null>
@@ -43,7 +45,7 @@ function Sheet(
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
-  const dragPathRef = useRef<EventTarget[]>([]);
+  const dragInsideScrollRef = useRef(false);
   const [{ y }, set] = useSpring(() => {
     const snapPoint = initialSnapPoint
       ? initialSnapPoint
@@ -86,33 +88,75 @@ function Sheet(
 
       const nativeEvent = (event as any) as Event;
 
-      let newY = memo + my;
-
       if (first) {
         draggingRef.current = true;
 
         const fromElement = nativeEvent.srcElement || nativeEvent.target;
 
-        dragPathRef.current = pathUntilElement(
-          fromElement as HTMLElement,
-          sheetRef.current as HTMLElement
-        );
+        if (scrollRef && scrollRef.current) {
+          const path = pathUntilElement(
+            fromElement as HTMLElement,
+            sheetRef.current as HTMLElement
+          );
+
+          dragInsideScrollRef.current = path.includes(scrollRef.current);
+        } else {
+          dragInsideScrollRef.current = false;
+        }
       } else if (last) {
         draggingRef.current = false;
-        dragPathRef.current = [];
       }
 
-      // adds friction when dragging the sheet upward
-      // the more the user drags up, the more friction
-      if (newY < 0) newY = newY / (1 - newY * 0.005);
+      let newY = memo + my;
+      let applyFriction = true;
+      const isInsideScroll = dragInsideScrollRef.current;
+
+      if (isInsideScroll && scrollRef && scrollRef.current) {
+        const scrollElement = scrollRef.current;
+
+        if (my > 0) {
+          // Down
+
+          if (scrollElement.scrollTop !== 0) {
+            // Prevent downwards movement from executing until
+            // the scroll reaches the top
+            return memo;
+          }
+        } else if (my < 0) {
+          // Up
+
+          const height =
+            scrollElement.scrollHeight - scrollElement.offsetHeight;
+
+          if (height !== scrollElement.scrollTop) {
+            applyFriction = false;
+          }
+        }
+      }
+
+      if (applyFriction) {
+        // adds friction when dragging the sheet upward
+        // the more the user drags up, the more friction
+        if (newY < 0) {
+          newY = newY / (1 - newY * 0.005);
+        }
+
+        // if the user drags up passed a threshold, then we cancel
+        // the drag so that the sheet resets to its open position
+        if (newY < -120 && cancel) {
+          cancel();
+        }
+      } else {
+        if (newY < 0 && cancel) {
+          // no friction means we should cancel drags
+          // that attempt to move the sheet outside the viewport
+          cancel();
+
+          newY = 0;
+        }
+      }
 
       const lastSnapPoint = realSnapPoints[realSnapPoints.length - 1];
-
-      // if the user drags up passed a threshold, then we cancel
-      // the drag so that the sheet resets to its open position
-      if (newY < -120 && cancel) {
-        cancel();
-      }
 
       if (last) {
         const [closestSnapPoint] = realSnapPoints.reduce(
