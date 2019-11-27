@@ -65,7 +65,13 @@ function Sheet(
   }, []);
 
   useLayoutEffect(() => {
-    sheetRef.current && disableBodyScroll(sheetRef.current);
+    const element = (scrollRef && scrollRef.current) || sheetRef.current;
+
+    if (element) {
+      disableBodyScroll(element, {
+        allowTouchMove: () => true,
+      });
+    }
 
     return () => {
       clearAllBodyScrollLocks();
@@ -189,6 +195,9 @@ function Sheet(
     },
     {
       dragDelay: dragDelay,
+      event: {
+        passive: false,
+      },
     }
   );
 
