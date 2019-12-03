@@ -1,7 +1,7 @@
 import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Sheet from '../.';
+import Sheet from '../../.';
 import './styles.css';
 
 const items = new Array(100).fill(null).map((_, index) => `Item ${index}`);
